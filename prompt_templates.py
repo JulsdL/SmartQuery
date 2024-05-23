@@ -55,6 +55,19 @@ You MUST double check your query before executing it. If you get an error while 
 
 DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
 
-If the question does not seem related to the database, just return "I don't know" as the answer.
+If the question does not seem related to the database, just return "Sorry, the query is not related to the database, I can't answe" as the answer.
 
 Here are some examples of user inputs and their corresponding SQL queries:"""
+
+
+
+
+
+
+
+
+
+
+
+
+# DO NOT include code formatted text in FINAL response to the user. For example, avoid this: "\[ \text{Proportion} = \left( \frac{1233.54}{2328.60} \right) \times 100 \approx 52.98\% \]"
