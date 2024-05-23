@@ -1,5 +1,8 @@
+import ast
+import re
 from dotenv import load_dotenv
 from langchain_community.agent_toolkits import create_sql_agent
+from langchain.tools.retriever import create_retriever_tool
 from langchain_community.vectorstores import FAISS
 from langchain_core.example_selectors import SemanticSimilarityExampleSelector
 from langchain_core.prompts import ChatPromptTemplate, FewShotPromptTemplate, MessagesPlaceholder, PromptTemplate, SystemMessagePromptTemplate
@@ -23,6 +26,29 @@ db.run("SELECT * FROM Artist LIMIT 10;")
 # Initialize the LLM
 llm = ChatOpenAI(model="gpt-4o", temperature=0)
 
+# Function to query database and get list of elements
+def query_as_list(db, query):
+    res = db.run(query)
+    res = [el for sub in ast.literal_eval(res) for el in sub if el]
+    res = [re.sub(r"\b\d+\b", "", string).strip() for string in res]
+    return list(set(res))
+
+# Create lists of artists and albums
+artists = query_as_list(db, "SELECT Name FROM Artist")
+albums = query_as_list(db, "SELECT Title FROM Album")
+
+# Create a vector store and use it as a retriever
+vector_db = FAISS.from_texts(artists + albums, OpenAIEmbeddings())
+retriever = vector_db.as_retriever(search_kwargs={"k": 5})
+
+# Create a search proper nouns tool
+description = """Use to look up values to filter on. Input is an approximate spelling of the proper noun, output is \
+valid proper nouns. Use the noun most similar to the search."""
+retriever_tool = create_retriever_tool(
+    retriever,
+    name="search_proper_nouns",
+    description=description,
+)
 
 # Example selector will dynamically select examples based on the input question
 example_selector = SemanticSimilarityExampleSelector.from_examples(
@@ -57,7 +83,8 @@ full_prompt = ChatPromptTemplate.from_messages(
 SQLAgent = create_sql_agent(
     llm=llm,
     db=db,
+    extra_tools=[retriever_tool],
     prompt=full_prompt,
-    verbose=True,
     agent_type="openai-tools",
+    verbose=True,
 )
