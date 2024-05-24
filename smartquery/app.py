@@ -18,6 +18,7 @@ ELEVENLABS_VOICE_ID = os.environ.get("ELEVENLABS_VOICE_ID")
 if not ELEVENLABS_API_KEY or not ELEVENLABS_VOICE_ID:
     raise ValueError("ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID must be set")
 
+# Set up the OpenAI API
 client = AsyncOpenAI()
 
 @cl.step(type="tool")
@@ -27,18 +28,21 @@ async def speech_to_text(audio_file):
     )
     return response.text
 
-@cl.step(type="tool")
-async def generate_text_answer(transcription, images):
-    model = "gpt-4o"
-    messages = [{"role": "user", "content": transcription}]
-    response = await client.chat.completions.create(
-        messages=messages, model=model, temperature=0.3
-    )
-    return response.choices[0].message.content
 
 @cl.on_chat_start
 async def on_chat_start():
     cl.user_session.set("agent", SQLAgent)
+
+    # Configure Chainlit features for audio capture
+    cl.user_session.set("audio_settings", {
+        "min_decibels": -80,
+        "initial_silence_timeout": 500,
+        "silence_timeout": 2500,
+        "max_duration": 15000,
+        "chunk_duration": 1000,
+        "sample_rate": 44100
+    })
+    print("Chat session started and audio settings configured")
 
 @cl.on_message
 async def on_message(message: cl.Message):
@@ -46,19 +50,24 @@ async def on_message(message: cl.Message):
 
 @cl.on_audio_chunk
 async def on_audio_chunk(chunk: cl.AudioChunk):
-    if chunk.isStart:
-        buffer = BytesIO()
-        # This is required for whisper to recognize the file type
-        buffer.name = f"input_audio.{chunk.mimeType.split('/')[1]}"
-        # Initialize the session for a new audio stream
-        cl.user_session.set("audio_buffer", buffer)
-        cl.user_session.set("audio_mime_type", chunk.mimeType)
+    print("Received audio chunk")
+    try:
+        if chunk.isStart:
+            buffer = BytesIO()
+            buffer.name = f"input_audio.{chunk.mimeType.split('/')[1]}"
+            # Initialize the session for a new audio stream
+            cl.user_session.set("audio_buffer", buffer)
+            cl.user_session.set("audio_mime_type", chunk.mimeType)
 
-    cl.user_session.get("audio_buffer").write(chunk.data)
+        cl.user_session.get("audio_buffer").write(chunk.data)
+
+    except Exception as e:
+        print(f"Error handling audio chunk: {e}")
 
 @cl.on_audio_end
 async def on_audio_end(elements: list[Audio]):
     try:
+        print("Audio recording ended")
         audio_buffer: BytesIO = cl.user_session.get("audio_buffer")
         audio_buffer.seek(0)
         audio_file = audio_buffer.read()
@@ -76,21 +85,24 @@ async def on_audio_end(elements: list[Audio]):
 
         whisper_input = (audio_buffer.name, audio_file, audio_mime_type)
         transcription = await speech_to_text(whisper_input)
+        print("Transcription received:", transcription)
 
         await process_message(transcription)
+
     except Exception as e:
         print(f"Error processing audio: {e}")
         await cl.Message(content="Error processing audio. Please try again.").send()
+
     finally:
         # Reset audio buffer and mime type
         cl.user_session.set("audio_buffer", None)
         cl.user_session.set("audio_mime_type", None)
         print("Audio buffer reset")
 
-async def process_message(content: str, answer_message=None, mime_type=None):
+async def process_message(content: str, answer_message=None):
     agent = cl.user_session.get("agent")
-    cb = cl.AsyncLangchainCallbackHandler(stream_final_answer=True)
-    config = RunnableConfig(callbacks=[cb])
+    cb = cl.AsyncLangchainCallbackHandler(stream_final_answer=True) # Create a callback handler
+    config = RunnableConfig(callbacks=[cb]) # Add the callback handler to the config
 
     async with cl.Step(name="SmartQuery Agent", root=True) as step:
         step.input = content
