@@ -9,14 +9,14 @@ from langchain_core.prompts import ChatPromptTemplate, FewShotPromptTemplate, Me
 from langchain_openai import OpenAIEmbeddings
 from langchain_openai import ChatOpenAI
 from langchain_community.utilities import SQLDatabase
-from prompt_templates import few_shot_examples, system_prefix
+from smartquery.prompt_templates import few_shot_examples, system_prefix
 
 
 # Load the .env file
 load_dotenv()
 
 # Initialize the SQL database
-db = SQLDatabase.from_uri("sqlite:///Chinook.db")
+db = SQLDatabase.from_uri("sqlite:///database/Chinook.db")
 
 # Check the database connection
 print(db.dialect)
