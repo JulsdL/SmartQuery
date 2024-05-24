@@ -1,1 +1,1 @@
-web: chainlit run smartquery/app.py --port $PORT
+web: python smartquery/init_db.py && chainlit run smartquery/app.py --port $PORT
