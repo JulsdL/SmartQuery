@@ -49,9 +49,9 @@ ELEVENLABS_VOICE_ID=your-elevenlabs-voice-id-here
 
 Run the application using the following command:
 
-    ```bash
-    chainlit run app.py
-    ```
+```bash
+chainlit run app.py
+```
 
 ## Usage
 
