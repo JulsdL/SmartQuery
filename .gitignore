@@ -11,9 +11,6 @@ __pycache__/
 .chainlit/
 .files/
 
-# Database
-database/
-
 # Distribution / packaging
 .Python
 build/
