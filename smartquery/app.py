@@ -58,32 +58,34 @@ async def on_audio_chunk(chunk: cl.AudioChunk):
 
 @cl.on_audio_end
 async def on_audio_end(elements: list[Audio]):
-    audio_buffer: BytesIO = cl.user_session.get("audio_buffer")
-    audio_buffer.seek(0)
-    audio_file = audio_buffer.read()
-    audio_mime_type: str = cl.user_session.get("audio_mime_type")
+    try:
+        audio_buffer: BytesIO = cl.user_session.get("audio_buffer")
+        audio_buffer.seek(0)
+        audio_file = audio_buffer.read()
+        audio_mime_type: str = cl.user_session.get("audio_mime_type")
 
-    input_audio_el = Audio(
-        mime=audio_mime_type, content=audio_file, name=audio_buffer.name
-    )
-    await cl.Message(
-        author="You",
-        type="user_message",
-        content="",
-        elements=[input_audio_el, *elements]
-    ).send()
+        input_audio_el = Audio(
+            mime=audio_mime_type, content=audio_file, name=audio_buffer.name
+        )
+        await cl.Message(
+            author="You",
+            type="user_message",
+            content="",
+            elements=[input_audio_el, *elements]
+        ).send()
 
-    answer_message = await cl.Message(content="").send()
+        whisper_input = (audio_buffer.name, audio_file, audio_mime_type)
+        transcription = await speech_to_text(whisper_input)
 
-    whisper_input = (audio_buffer.name, audio_file, audio_mime_type)
-    transcription = await speech_to_text(whisper_input)
-
-    await process_message(transcription, answer_message, audio_mime_type)
-
-    # Reset audio buffer and mime type
-    cl.user_session.set("audio_buffer", None)
-    cl.user_session.set("audio_mime_type", None)
-    print("Audio buffer reset")
+        await process_message(transcription)
+    except Exception as e:
+        print(f"Error processing audio: {e}")
+        await cl.Message(content="Error processing audio. Please try again.").send()
+    finally:
+        # Reset audio buffer and mime type
+        cl.user_session.set("audio_buffer", None)
+        cl.user_session.set("audio_mime_type", None)
+        print("Audio buffer reset")
 
 async def process_message(content: str, answer_message=None, mime_type=None):
     agent = cl.user_session.get("agent")
