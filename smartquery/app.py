@@ -35,9 +35,9 @@ async def on_chat_start():
 
     # Configure Chainlit features for audio capture
     cl.user_session.set("audio_settings", {
-        "min_decibels": -80,
-        "initial_silence_timeout": 500,
-        "silence_timeout": 2500,
+        "min_decibels": -20,
+        "initial_silence_timeout": 2000,
+        "silence_timeout": 3500,
         "max_duration": 15000,
         "chunk_duration": 1000,
         "sample_rate": 44100

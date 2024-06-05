@@ -30,17 +30,31 @@ This structure allows you to ask a wide range of questions about sales, customer
 
 ## How It Works 🧠
 
-SmartQuery is an agentic application that leverages advanced natural language processing (NLP) techniques to understand your queries in plain English and convert them into SQL queries to retrieve the desired information from the database. You can interact with SmartQuery via text or voice, making it incredibly versatile and user-friendly.
+SmartQuery is an agentic application that leverages GPT-4o to understand your queries in plain English and convert them into SQL queries to retrieve the desired information from the database. You can interact with SmartQuery via text or voice, making it incredibly versatile and user-friendly.
+
+Key Features:
+
+- Natural Language to SQL: Users can ask questions in plain English, and the application generates the corresponding SQL queries to fetch the required data from the database.
+- Advanced Prompt Engineering: The application employs sophisticated prompt engineering techniques to accurately interpret user inputs and generate precise SQL queries.
+- Few-shot Learning: Dynamically selected examples improve the accuracy and relevance of generated queries.
+- Complex Queries: The application can handle intricate SQL operations, including JOINs and filters, to address complex user queries effectively.
+- Proper Noun Correction Tool: Handles high-cardinality columns containing proper nouns (such as addresses, song names, or artists) by querying a vector store of known entities, ensuring accurate and relevant results (e.g., if you ask for Methalika titles, it will "understand" Metallica).
 
 ## The Tech Behind It 💡🤖
 
 SmartQuery is built using state-of-the-art technologies, including:
 
-- **LangChain**: For chaining together multiple language model prompts and responses.
+- **LangChain**: For LLM and agent orchestration.
 - **OpenAI GPT-4o**: For understanding and processing natural language queries.
 - **FAISS**: For efficient similarity search and retrieval.
 - **Chainlit**: For building interactive AI applications front-end.
-- **Eleven Labs**: For speech-to-text and text-to-speech functionalities, enabling voice interactions.
+- **Eleven Labs**: For speech-to-text functionalities, enabling voice interactions.
+
+## Links and Resources 🌐
+
+- Github Repository: https://github.com/JulsdL/SmartQuery
+- LangChain documentation: https://python.langchain.com/v0.2/docs/tutorials/sql_qa/#execute-sql-query
+- ChainLit documentation: https://docs.chainlit.io/get-started/overview
 
 ## Ready to Query?
 
